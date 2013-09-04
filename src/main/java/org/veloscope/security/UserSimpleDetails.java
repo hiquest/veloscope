@@ -10,7 +10,7 @@ import java.util.Collection;
 
 public class UserSimpleDetails implements UserDetails {
 
-    private static final String REGISTERED_ROLE = "ROLE_USER";
+    public static final String REGISTERED_ROLE = "ROLE_USER";
 
     private UserEntity user;
 
