@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.veloscope</groupId>
     <artifactId>veloscope</artifactId>
-    <version>0.0.4-SNAPSHOT</version>
+    <version>0.0.10-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <properties>
@@ -14,9 +14,6 @@
         <hibernate-jpa-2.0-api.version>1.0.0.Final</hibernate-jpa-2.0-api.version>
         <hibernate-validator.version>4.1.0.Final</hibernate-validator.version>
         <spring-security.version>3.1.4.RELEASE</spring-security.version>
-
-        <archiva-deployment-user>velouser</archiva-deployment-user>
-        <archiva-deployment-pwd>hiquest#1</archiva-deployment-pwd>
     </properties>
 
     <dependencies>
@@ -131,12 +128,12 @@
         <repository>
             <id>internal</id>
             <name>Internal Release Repository</name>
-            <url>http://libie.ru:8080/archiva/repository/internal/</url>
+            <url>http://162.243.14.73:8080/archiva/repository/internal/</url>
         </repository>
         <snapshotRepository>
             <id>snapshots</id>
             <name>Internal Snapshot Repository</name>
-            <url>http://libie.ru:8080/archiva/repository/snapshots/</url>
+            <url>http://162.243.14.73:8080/archiva/repository/snapshots/</url>
         </snapshotRepository>
     </distributionManagement>
 
