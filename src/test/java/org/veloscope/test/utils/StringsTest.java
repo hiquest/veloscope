@@ -40,4 +40,9 @@ public class StringsTest {
         Assert.assertEquals("A", Strings.capitalize("a"));
         Assert.assertEquals("Getme", Strings.capitalize("getme"));
     }
+
+    @Test
+    public void testSafeCrop() {
+
+    }
 }

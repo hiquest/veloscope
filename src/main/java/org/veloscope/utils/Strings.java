@@ -17,4 +17,12 @@ public class Strings {
         return (s.substring(0, 1).toUpperCase() + s.substring(1, s.length()));
 
     }
+
+    public static String safeCrop(String in, int limit) {
+        if (Strings.empty(in) || in.length() < limit) {
+            return in;
+        }
+
+        return in.substring(0, limit -1) + "...";
+    }
 }

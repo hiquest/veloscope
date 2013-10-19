@@ -60,9 +60,11 @@ public class VelloApiController {
 
     @Transactional
     @RequestMapping(value = {"/", ""}, method = { RequestMethod.GET })
-    public @ResponseBody Result list(@PathVariable String resourceName, @RequestParam(defaultValue = "0") Integer page,
-                                           @RequestParam(defaultValue = "20") Integer perPage,
-                                              HttpServletRequest request) {
+    public @ResponseBody Result list(@PathVariable String resourceName,
+                                     @RequestParam(defaultValue = "0") Integer page,
+                                     @RequestParam(defaultValue = "20") Integer perPage,
+                                     HttpServletRequest request) {
+
         List<String> skipParams = Arrays.asList("page", "perPage", "_");
         Resource resource = getResource(resourceName);
         Map<String, String[]> params = request.getParameterMap();

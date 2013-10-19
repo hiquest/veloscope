@@ -42,7 +42,13 @@ public final class SecurityHelper {
             return null;
         }
 
-        return ((UserSimpleDetails) SecurityContextHolder.getContext().getAuthentication().getDetails()).getUser();
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Object principal = auth.getPrincipal();
+        UserEntity out = null;
+        if (principal instanceof UserSimpleDetails) {
+            out = ((UserSimpleDetails) principal).getUser();
+        }
+        return out;
     }
 
     private static class SocialAuthToken extends AbstractAuthenticationToken {
@@ -61,6 +67,11 @@ public final class SecurityHelper {
 
         @Override
         public Object getPrincipal() {
+            return details;
+        }
+
+        @Override
+        public Object getDetails() {
             return details;
         }
     }

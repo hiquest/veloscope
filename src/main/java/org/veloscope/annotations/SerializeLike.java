@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Use like
+ * Use like this:
  * @SerializeLike("id, accountId: account.id, ")
  */
 @Target(value = ElementType.TYPE)
