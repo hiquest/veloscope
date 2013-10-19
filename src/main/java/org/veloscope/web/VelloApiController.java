@@ -13,6 +13,7 @@ import org.veloscope.json.Result;
 import org.veloscope.resource.EntityInterface;
 import org.veloscope.resource.Resource;
 import org.veloscope.resource.Scope;
+import org.veloscope.utils.Strings;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
@@ -61,11 +62,12 @@ public class VelloApiController {
     @Transactional
     @RequestMapping(value = {"/", ""}, method = { RequestMethod.GET })
     public @ResponseBody Result list(@PathVariable String resourceName,
+                                     @RequestParam(required = false) String q,
                                      @RequestParam(defaultValue = "0") Integer page,
                                      @RequestParam(defaultValue = "20") Integer perPage,
                                      HttpServletRequest request) {
 
-        List<String> skipParams = Arrays.asList("page", "perPage", "_");
+        List<String> skipParams = Arrays.asList("page", "perPage", "_", "q");
         Resource resource = getResource(resourceName);
         Map<String, String[]> params = request.getParameterMap();
 
@@ -80,6 +82,8 @@ public class VelloApiController {
                 scope = scope.by(p, value);
             }
         }
+
+        scope = resource.addQuery(scope, q);
 
         List out = scope.list(page, perPage);
         return Result.ok(resource.toJSON(out));

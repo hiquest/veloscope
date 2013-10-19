@@ -8,6 +8,7 @@ import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.veloscope.utils.Strings;
 
 import javax.persistence.EntityManager;
 import java.util.ArrayList;
@@ -27,13 +28,6 @@ public class Scope<T> {
         this.clazz = clazz;
     }
 
-    public List<T> list(Integer page, Integer perPage) {
-        Criteria c = buildCriteria();
-        c.setFirstResult(page * perPage);
-        c.setMaxResults(perPage);
-        return (List<T>) c.list();
-    }
-
     private Criteria buildCriteria() {
         Session hibernateSession = (Session) entityManager.getDelegate();
         Criteria c = hibernateSession.createCriteria(this.clazz);
@@ -44,6 +38,13 @@ public class Scope<T> {
             c.addOrder(o);
         }
         return c;
+    }
+
+    public List<T> list(Integer page, Integer perPage) {
+        Criteria c = buildCriteria();
+        c.setFirstResult(page * perPage);
+        c.setMaxResults(perPage);
+        return (List<T>) c.list();
     }
 
     public List<T> list() {

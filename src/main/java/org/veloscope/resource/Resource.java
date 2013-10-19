@@ -4,6 +4,7 @@ import org.hibernate.Criteria;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.criterion.Criterion;
+import org.hibernate.criterion.MatchMode;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
@@ -18,6 +19,8 @@ import org.veloscope.json.DTOHelper;
 import org.veloscope.json.DataTransferObject;
 import org.veloscope.security.SecurityHelper;
 import org.veloscope.utils.Reflection;
+import org.veloscope.utils.ResourcePrepare;
+import org.veloscope.utils.Strings;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -37,21 +40,24 @@ public class Resource<T extends EntityInterface> {
 
     @PersistenceContext
     protected EntityManager entityManager;
+
     private Class<T> cl;
     private Class<? extends DataTransferObject<T>> defaultDTOClass;
     private List<String> allowedFilters;
     private List<Order> defaultOrders;
     private Map<String, List<Check>> checks = new HashMap<String, List<Check>>();
     private boolean fakeDelete = false;
+    private List<String> queryFields;
 
     public Resource() {
         Class<? extends Resource> myClass = this.getClass();
 
-        prepareDefaultOrders();
+        this.defaultOrders = ResourcePrepare.prepareDefaultOrders(myClass);
         this.checks.put("get", PrepareChecks.forGet(myClass));
         this.checks.put("delete", PrepareChecks.forDelete(myClass));
-        prepareAllowedFilters();
-        fakeDelete = myClass.isAnnotationPresent(FakeDelete.class);
+        this.allowedFilters = ResourcePrepare.prepareAllowedFilters(myClass);
+        this.fakeDelete = myClass.isAnnotationPresent(FakeDelete.class);
+        this.queryFields = ResourcePrepare.prepareQueryFields(myClass);
     }
 
     public Resource(Class cl) {
@@ -60,8 +66,7 @@ public class Resource<T extends EntityInterface> {
     }
 
     public Resource(Class cl, Class<? extends DataTransferObject<T>> defaultDTOClass) {
-        this();
-        this.cl = cl;
+        this(cl);
         this.defaultDTOClass = defaultDTOClass;
     }
 
@@ -72,33 +77,9 @@ public class Resource<T extends EntityInterface> {
         this.defaultDTOClass = defaultDTOClass;
     }
 
-    private void prepareDefaultOrders() {
-        defaultOrders = new ArrayList<Order>();
-        Class resourceClass = this.getClass();
-        if (resourceClass.isAnnotationPresent(DefaultOrder.class)) {
-            DefaultOrder filter = (DefaultOrder) resourceClass.getAnnotation(DefaultOrder.class);
-            String orderType = filter.order();
-            String field = filter.by();
-            if (!orderType.equalsIgnoreCase("asc") && !orderType.equalsIgnoreCase("desc")) {
-                throw new InvalidConfiguration("Invalid order type: " + orderType);
-            }
-            defaultOrders.add( orderType.equalsIgnoreCase("desc") ? Order.desc(field) : Order.asc(field) );
-        }
-    }
-
-    private void prepareAllowedFilters() {
-        allowedFilters = new ArrayList<String>();
-        Class resourceClass = this.getClass();
-        if (resourceClass.isAnnotationPresent(ListFilter.class)) {
-            ListFilter filter = (ListFilter) resourceClass.getAnnotation(ListFilter.class);
-            this.allowedFilters = Arrays.asList(filter.by().split("[,\\s]+"));
-        }
-
-        LOG.debug("Filters prepared: " + allowedFilters.size());
-    }
-
-
     //--------- DAO ----------------
+    // TODO: maybe it would be better to extract all dao into a DAO class, and call it like this:
+    // books.dao.save(), books.dao.findById(), and so on
     public Criteria createCriteria() {
         Session hibernateSession = (Session) entityManager.getDelegate();
         return hibernateSession.createCriteria(cl);
@@ -119,17 +100,31 @@ public class Resource<T extends EntityInterface> {
     }
 
     public void merge(T obj) {
+        merge(obj, true);
+    }
+
+    public void merge(T obj, boolean flush) {
         if (obj.getId() == null) {
             throw new IllegalStateException("Object doesn't have an id and therefore can not be merged");
         }
 
+        beforeMerge(obj);
         entityManager.merge(obj);
-        entityManager.flush();
+        if (flush) {
+            entityManager.flush();
+        }
     }
 
     public Long save(T obj) {
+        return save(obj, true);
+    }
+
+    public Long save(T obj, boolean flush) {
+        beforeSave(obj);
         entityManager.persist(obj);
-        entityManager.flush();
+        if (flush) {
+            entityManager.flush();
+        }
         return obj.getId();
     }
 
@@ -217,6 +212,19 @@ public class Resource<T extends EntityInterface> {
         return new Criterion[]{};
     }
 
+    public Scope<T> addQuery(Scope<T> scope, String q) {
+        if (Strings.empty(q) || this.queryFields.size() == 0) {
+            return scope;
+        }
+//        Criterion orCriteria = Restrictions.sqlRestriction("1=1");
+//        for (String s: queryFields) {
+//            orCriteria = Restrictions.or(orCriteria, Restrictions.ilike(s, q, MatchMode.ANYWHERE));
+//        }
+        scope.rest(Restrictions.ilike(this.queryFields.get(0), q, MatchMode.ANYWHERE));
+        return scope;
+    }
+
+    // -- Just shortcuts for often used scopes --
     public List<T> list(Integer page, Integer perPage) {
         return buildScope().list(page, perPage);
     }
@@ -250,5 +258,14 @@ public class Resource<T extends EntityInterface> {
 
     public List<DataTransferObject<T>> toJSON(List<T> out, Class dtoClass) {
         return DTOHelper.fromList(out, dtoClass);
+    }
+
+    // ------------------- INTERCEPTORS ------------
+    public void beforeSave(T entity) {
+        // override me if you want
+    }
+
+    public void beforeMerge(T entity) {
+        // override me if you want
     }
 }
